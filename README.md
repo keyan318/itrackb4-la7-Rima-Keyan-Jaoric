@@ -35,3 +35,17 @@ The detail page needed a change — I changed the check to a wildcard, `request(
 ### Q4. You deleted your old filter method but kept the empty store and update methods, even though none of the three can be reached by a URL. Explain the difference between them.
 
 `store()` and `update()` are empty because I haven't built them yet — they're for later weeks. My old `filter()` method was different: it was finished, and I replaced it with a better way of filtering. So I kept the unfinished ones and deleted the one that was already replaced.
+
+## Lab Activity 7 — Let Them Add Something
+
+### Q1. Your form sends data with POST rather than GET. Explain what would go wrong if it used GET instead.
+
+With GET, every field the visitor typed would be sitting in the URL as a query string, so the movie title, year and rating would all be visible in the address bar and saved in the browser history. That also means the whole submission can be repeated just by pressing refresh or going back — the browser re-requests that same URL, and my `store()` would run again and add the record a second time. A POST is different: the browser knows it is sending a body, so when you refresh it asks first instead of silently repeating it. That is why the form is POST and why `store()` ends with a redirect.
+
+### Q2. When validation fails, your controller does not run the code that saves the record — and you did not write an if statement to stop it. Explain what actually stops it, and where the visitor ends up.
+
+`$request->validate()` is what stops it. When a rule fails it throws a validation exception, and throwing ends the method right there, so the lines below it — casting the year, reading the JSON file, and `saveMovies()` — never run at all. Laravel catches that exception and sends the visitor back to the page they submitted from, with the error messages and their old input flashed to the session. So they end up on `/movies/create` again, with the messages showing under the fields and nothing added to `movies.json`.
+
+### Q3. Your success message is displayed from the layout, which renders on every page. Explain why it does not appear on every page.
+
+The layout does render on every page, but the check inside it is `@if (session('success'))`, so it only actually prints something when that key exists. The key only exists because `store()` put it there with `->with('success', ...)`, and it is flashed — it is kept for exactly the next request and then deleted. So the redirect after saving is the one request where the layout finds it and shows the alert; on the next page I open the session no longer has the key, the `@if` is false, and the layout renders with no message. The layout runs everywhere, but the condition is true only once.
