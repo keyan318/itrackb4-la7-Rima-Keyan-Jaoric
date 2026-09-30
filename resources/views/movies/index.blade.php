@@ -4,7 +4,10 @@
 
 @section('content')
 
-    <h2 class="mb-3">Movie List</h2>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Movie List</h2>
+        <a href="{{ route('movies.create') }}" class="btn btn-success">+ Add Movie</a>
+    </div>
 
     {{-- Active filter status --}}
     @if($genre || $year)
@@ -25,7 +28,7 @@
     {{-- Genre filter links --}}
     <div class="mb-2">
         <span class="fw-semibold me-2">Genre:</span>
-        @foreach(['Action', 'Science Fiction', 'Superher'] as $g)
+        @foreach(['Action', 'Science Fiction', 'Superhero'] as $g)
             <a href="{{ route('movies.index', array_filter(['genre' => $g, 'year' => $year])) }}"
                class="btn btn-sm me-1 {{ $genre === $g ? 'btn-primary' : 'btn-outline-primary' }}">
                 {{ $g }}
@@ -61,7 +64,11 @@
             @forelse ($items as $movie)
                 <tr>
                     <td>{{ $loop->iteration }}</td>
-                    <td><strong>{{ $movie['title'] }}</strong></td>
+                    <td>
+                        <a href="{{ route('movies.show', $movie['id']) }}" class="fw-bold text-decoration-none">
+                            {{ $movie['title'] }}
+                        </a>
+                    </td>
                     <td>{{ $movie['genre'] }}</td>
                     <td>{{ $movie['year'] }}</td>
                     <td>{{ $movie['director'] }}</td>

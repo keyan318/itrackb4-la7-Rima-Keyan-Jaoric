@@ -7,16 +7,17 @@ use Illuminate\Http\Request;
 class MovieController extends Controller
 {
 
-   private function getItems(){
-    return [
-        1=>['id'=>1, 'title'=>'Inception','genre'=>'Science Fiction','year'=>2010,'director'=>'Christopher Nolan', 'rating'=>8.8,'duration'=>'2h 28m'],
-        2=>['id'=>2, 'title'=>'Interstellar','genre'=>'Science Fiction','year'=>2014,'director'=>'Christopher Nolan', 'rating'=>8.0,'duration'=>'2h 49m'],    
-        3=>['id'=>3, 'title'=>'The Dark Knight','genre'=>'Action','year'=>2008,'director'=>'Christopher Nolan', 'rating'=>9.3,'duration'=>'2h 32m'],
-        4=>['id'=>4, 'title'=>'Inception','genre'=>'Science Fiction','year'=>2010,'director'=>'Anthony Russo, Joe Russo', 'rating'=>8.8,'duration'=>'3h 2m'],
-        5=>['id'=>5, 'title'=>'Spiderman: No Way Home','genre'=>'Superher','year'=>2021,'director'=>'Jon Watts', 'rating'=>8.9,'duration'=>'2h 28m'],
-        6=>['id'=>6, 'title'=>'The Matrix','genre'=>'Science Fiction','year'=>1999,'director'=>'Christopher Nolan', 'rating'=>8.4,'duration'=>'2h 16m'],
-          ];   
-    }
+  private function getItems()
+{
+    return json_decode(file_get_contents(storage_path('app/movies.json')), true);
+}
+
+private function saveMovies($all)
+{
+    file_put_contents(storage_path('app/movies.json'), 
+    json_encode($all, JSON_PRETTY_PRINT));
+}
+
     public function index(Request $request)
 {
     $genre = $request->query('genre', '');
@@ -46,13 +47,39 @@ class MovieController extends Controller
 
     public function create()
     {
-        //
+        return view('movies.create');
     }
 
 
     public function store(Request $request)
     {
-        //
+        $validated=$request->validate([
+            'title' =>'required|string|min:10|max:100',
+            'genre' =>'required|in:Action,Science Fiction,Superhero',
+            'year' =>'required|integer|min:1888|max:2100',
+            'director'=>['required','string','min:10','max:100','regex:/^[A-Za-z .,\'-]+$/'],
+            'rating'=>'required|numeric|min:0|max:10',
+            'duration'=>['required','regex:/^\d{1,2}h\s?\d{1,2}m$/'],
+        ],[
+            'title.min' =>'The title must be at least 10 characters.',
+            'title.max' =>'The title must not be longer than 100 characters.',
+            'director.min' =>'The director must be at least 10 characters.',
+            'director.regex' =>'The director may only contain letters, spaces, periods, commas, apostrophes and hyphens.',
+            'duration.regex' =>'The duration must look like 2h 28m.',
+        ]);
+
+        $validated['year']=(int)$validated['year'];
+        $validated['rating']=(float)$validated['rating'];
+
+        $all=$this->getItems();
+        $nextId=$all ? max(array_keys($all))+1 : 1;
+        $validated['id']=$nextId;
+        $all[$nextId]=$validated;
+        $this->saveMovies($all);
+
+        return redirect()
+        ->route('movies.index')
+        ->with('success', 'Movie added successfully.');
     }
 
 
